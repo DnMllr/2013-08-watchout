@@ -1,6 +1,6 @@
 var gameOptions = {
-  height: 450,
-  width: 700,
+  height: 300,
+  width: 500,
   nEnemies: 1,
   padding: 20
 };
@@ -29,12 +29,14 @@ var gameBoard =
 
 var updateScore = function(){
   d3.select('.current-score')
-  .text(gameStats.score.toString());
+  .text("Score = " + gameStats.score.toString());
 };
 
 var updateBestScore= function(){
-  gameStats.bestScore = _.max(gameStats.bestScore, gameStats.score);
-  d3.select('.highScore').text(gameStats.bestScore.toString());
+  if (gameStats.score > gameStats.bestScore) {
+    gameStats.bestScore = gameStats.score;
+  }
+  d3.select('.highScore').text("Highscore = " + gameStats.bestScore.toString());
 };
 
 var playerMaker = function(gameOptions) {
@@ -163,6 +165,7 @@ var render = function(enemyData) {
   var onCollision = function(){
     updateBestScore();
     gameStats.score = 0;
+    gameStats.nEnemies = 1;
     updateScore();
   };
 
