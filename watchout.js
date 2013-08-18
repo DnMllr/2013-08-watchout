@@ -28,8 +28,18 @@ var gameBoard =
     .attr('height', gameOptions.height);
 
 var updateScore = function(){
-  d3.select('.current-score')
-  .text("Score = " + gameStats.score.toString());
+  var scoreBoard = gameBoard.selectAll('text').data([gameStats.score]);
+  scoreBoard.enter().append('text')
+    .attr('x', 0)
+    .attr('y', gameOptions.height-15)
+    .attr('font-family', 'helvetica')
+    .attr('font-size', "10em")
+    .attr('fill', 'gray')
+    .attr('opacity', '0.2')
+    .attr('class', 'currentScore')
+    .text(gameStats.score.toString());
+
+  d3.select('.currentScore').text(gameStats.score.toString());
 };
 
 var updateBestScore= function(){
@@ -70,10 +80,8 @@ var playerMaker = function(gameOptions) {
     this.el = to.append('svg:path')
       .attr('d', this.path)
       .attr('fill', this.fill);
-    this.tranform = {
-      x: this.gameOptions.width * 0.5,
-      y: this.gameOptions.height * 0.5
-    };
+    this.x = gameOptions.width * 0.5;
+    this.y = gameOptions.height * 0.5;
     this.setUpDragging();
     return this;
   };
@@ -137,16 +145,37 @@ var createEnemies = function(){
 };
 
 var render = function(enemyData) {
-  var enemies = gameBoard.selectAll('circle.enemy')
-    .data(enemyData, function(d) {return d.id;});
+  var enemyBuilder = function(enemyData) {
+    var enemies = gameBoard.selectAll('circle.enemy')
+      .data(enemyData, function(d) {return d.id;});
 
-  enemies.enter().append('svg:circle')
-    .attr('class', 'enemy')
-    .attr('cx', function(enemy) {return axes.x(enemy.x);})
-    .attr('cy', function(enemy) {return axes.y(enemy.y);})
-    .attr('r', 0);
+    enemies.enter().append('svg:circle')
+      .attr('class', 'enemy')
+      .attr('cx', function(enemy) {return axes.x(enemy.x);})
+      .attr('cy', function(enemy) {return axes.y(enemy.y);})
+      .attr('r', 0);
 
-  enemies.exit().remove();
+    enemies.exit().transition()
+      .attr('cx', function(i){
+        if (i%2 === 0) {
+          return 0;
+        } else {
+          return gameOptions.width;
+        }
+      })
+      .attr('cy', function(d){
+        if (d%2 === 0) {
+          return 0;
+        } else {
+          return gameOptions.width;
+        }
+      })
+      .attr('r', 0)
+      .remove();
+    return enemies;
+  };
+
+  var enemies = enemyBuilder(enemyData);
 
   var checkCollision = function(enemy, collidedCallback) {
     _.each(players, function(player) {
@@ -165,7 +194,11 @@ var render = function(enemyData) {
   var onCollision = function(){
     updateBestScore();
     gameStats.score = 0;
-    gameStats.nEnemies = 1;
+    gameOptions.nEnemies = 1;
+    enemies.transition()
+      .attr('opacity', '0.4')
+      .transition()
+      .attr('opacity', '1');
     updateScore();
   };
 
@@ -192,10 +225,10 @@ var render = function(enemyData) {
     };
   };
   enemies.transition()
-    .duration(500)
+    .duration(100)
     .attr('r', 10)
     .transition()
-    .duration(2000)
+    .duration(1000)
     .tween('custom', tweenWithCollisionDetection);
 };
 
@@ -211,19 +244,12 @@ var play = function() {
   };
 
   gameTurn();
-  setInterval(gameTurn, 2000);
+  setInterval(gameTurn, 1000);
 
   setInterval(increaseScore, 50);
 };
 
 play();
-
-
-
-
-
-
-
 
 
 
